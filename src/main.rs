@@ -35,9 +35,9 @@ impl Permutation {
 /// 中介数
 enum LehmerCodeValue {
     /// 12345678
-    Increse(Vec<i32>),
-    /// 87654321
     Decrese(Vec<i32>),
+    /// 87654321
+    Increse(Vec<i32>),
 }
 
 impl LehmerCodeValue {
@@ -49,24 +49,24 @@ impl LehmerCodeValue {
         let l = charset.len();
         let mut value = vec![];
         let (begin, end) = match is_increse {
-            true => (l, 2),
-            false => (2, l),
+            true => (2, l),
+            false => (l, 2),
         };
-        let mut radix = begin;
+        let mut radix = begin; // 进制 基数
         while radix != end {
             let remainder = num % radix; //余数
             num = num / radix; // 商
             value.push(remainder as i32);
             if is_increse {
-                radix -= 1
+                radix += 1
             } else {
-                radix += 1;
+                radix -= 1;
             }
         }
         if num
             >= match is_increse {
-                true => 2,
-                false => l,
+                true => l,
+                false => 2,
             }
         {
             return Err("A dicimal larger than total number of this permutation!");
@@ -118,14 +118,17 @@ mod lehmer_code_value_tests {
         ];
         for (d, l) in dicimal_lehmer {
             assert_eq!(
-                LehmerCodeValue::from_dicimal(d, &charset, false)
+                LehmerCodeValue::from_dicimal(d, &charset, true)
                     .unwrap()
                     .to_string(),
-                format!("{}{}", "LehmerCodeValue(dec): ", l)
+                format!("{}{}", "LehmerCodeValue(inc): ", l)
             );
         }
-        assert!(LehmerCodeValue::from_dicimal(120, &charset, false).is_err());
+        assert!(LehmerCodeValue::from_dicimal(120, &charset, true).is_err());
         assert!(LehmerCodeValue::from_dicimal(121, &charset, true).is_err());
+        assert!(LehmerCodeValue::from_dicimal(120, &charset, false).is_err());
+        assert!(LehmerCodeValue::from_dicimal(121, &charset, false).is_err());
+        assert!(LehmerCodeValue::from_dicimal(usize::MAX, &charset, true).is_err());
         assert!(LehmerCodeValue::from_dicimal(usize::MAX, &charset, false).is_err());
         let dicimal_lehmer = vec![
             (0, "0 0 0 0"),
@@ -141,10 +144,10 @@ mod lehmer_code_value_tests {
         ];
         for (d, l) in dicimal_lehmer {
             assert_eq!(
-                LehmerCodeValue::from_dicimal(d, &charset, true)
+                LehmerCodeValue::from_dicimal(d, &charset, false)
                     .unwrap()
                     .to_string(),
-                format!("{}{}", "LehmerCodeValue(inc): ", l)
+                format!("{}{}", "LehmerCodeValue(dec): ", l)
             );
         }
     }
