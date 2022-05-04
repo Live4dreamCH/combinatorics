@@ -48,10 +48,20 @@ impl LehmerCodeValue {
     ) -> Result<LehmerCodeValue, &'static str> {
         let l = charset.len();
         let mut value = vec![];
-        for radix in if is_increse { l..2 } else { 2..l } {
+        let (begin, end) = match is_increse {
+            true => (l, 2),
+            false => (2, l),
+        };
+        let mut radix = begin;
+        while radix != end {
             let remainder = num % radix; //余数
             num = num / radix; // 商
             value.push(remainder as i32);
+            if is_increse {
+                radix -= 1
+            } else {
+                radix += 1;
+            }
         }
         if num
             >= match is_increse {
@@ -96,20 +106,51 @@ mod lehmer_code_value_tests {
     #[test]
     fn from_dicimal() {
         let charset = Permutation::from_str("12345").unwrap();
-        let v = LehmerCodeValue::from_dicimal(0, &charset, false).unwrap();
-        assert_eq!(v.to_string(), "LehmerCodeValue(dec): 0 0 0 0");
+        let dicimal_lehmer = vec![
+            (0, "0 0 0 0"),
+            (1, "0 0 0 1"),
+            (2, "0 0 1 0"),
+            (3, "0 0 1 1"),
+            (4, "0 0 2 0"),
+            (117, "4 3 1 1"),
+            (118, "4 3 2 0"),
+            (119, "4 3 2 1"),
+        ];
+        for (d, l) in dicimal_lehmer {
+            assert_eq!(
+                LehmerCodeValue::from_dicimal(d, &charset, false)
+                    .unwrap()
+                    .to_string(),
+                format!("{}{}", "LehmerCodeValue(dec): ", l)
+            );
+        }
+        assert!(LehmerCodeValue::from_dicimal(120, &charset, false).is_err());
+        assert!(LehmerCodeValue::from_dicimal(121, &charset, true).is_err());
+        assert!(LehmerCodeValue::from_dicimal(usize::MAX, &charset, false).is_err());
+        let dicimal_lehmer = vec![
+            (0, "0 0 0 0"),
+            (1, "0 0 0 1"),
+            (2, "0 0 0 2"),
+            (3, "0 0 0 3"),
+            (4, "0 0 0 4"),
+            (5, "0 0 1 0"),
+            (6, "0 0 1 1"),
+            (117, "1 2 3 2"),
+            (118, "1 2 3 3"),
+            (119, "1 2 3 4"),
+        ];
+        for (d, l) in dicimal_lehmer {
+            assert_eq!(
+                LehmerCodeValue::from_dicimal(d, &charset, true)
+                    .unwrap()
+                    .to_string(),
+                format!("{}{}", "LehmerCodeValue(inc): ", l)
+            );
+        }
     }
 }
 
 fn main() {
-    let charset = Permutation::from_str("12345").unwrap();
-    for i in 0..120 {
-        println!(
-            "{}",
-            LehmerCodeValue::from_dicimal(i, &charset, false).unwrap()
-        );
-    }
-
     let s = String::from("你好，世界！");
     let p1 = Permutation::from_str(&s).unwrap();
     println!("{:?}", p1.charset);
